@@ -34,3 +34,11 @@ compile_commands.json
 test_venv/
 *.so
 logs/*
+__pycache__/
+*.pyc
+/build/
+/tmp/
+sana_out/
+run_summary.yaml
+emissions.csv
+*.png
