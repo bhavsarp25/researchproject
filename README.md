@@ -1,1 +1,90 @@
-# researchproject
+## Install these first (use pip3 if you are using a mac)
+pip install numpy scikit-learn matplotlib pyyaml codecarbon
+
+## To make the simulator:
+git clone https://github.com/SLAM-Lab/SANA-FE.git
+cd SANA-FE
+mkdir -p build
+cd build
+cmake ..
+make -j4
+
+(if you are using a mac then do this then run the build again)
+brew install cmake
+
+## arch file (important)
+## make this yaml inside the arch folder - simple_reservoir.yaml - and put this code into it
+architecture:
+  name: simple_arch
+  attributes:
+    link_buffer_size: 4
+    width: 1
+    height: 1
+  tile:
+    - name: tile_0
+      attributes:
+        energy_north_hop: 2.0e-12
+        latency_north_hop: 1.4e-9
+        energy_east_hop: 2.5e-12
+        latency_east_hop: 1.2e-9
+        energy_south_hop: 2.0e-12
+        latency_south_hop: 1.5e-9
+        energy_west_hop: 1.8e-12
+        latency_west_hop: 2.0e-9
+      core:
+        - name: 0.[0..7]
+          attributes:
+            buffer_position: soma
+            max_neurons_supported: 100
+          axon_in:
+            - name: axon_in
+              attributes:
+                energy_message_in: 100.0e-12
+                latency_message_in: 5.0e-9
+          synapse:
+            - name: synapse
+              attributes:
+                model: current_based
+                energy_process_spike: 20.0e-12
+                latency_process_spike: 1.0e-9
+          dendrite:
+            - name: dendrite
+              attributes:
+                model: accumulator
+                energy_update: 0.0
+                latency_update: 0.0
+                update_every_timestep: true
+          soma:
+            - name: res_soma
+              attributes:
+                model: leaky_integrate_fire
+                energy_access_neuron: 20.0e-12
+                latency_access_neuron: 3.0e-9
+                energy_update_neuron: 10.0e-12
+                latency_update_neuron: 1.0e-9
+                energy_spike_out: 20.0e-12
+                latency_spike_out: 3.0e-9
+            - name: input_soma
+              attributes:
+                model: input
+                energy_access_neuron: 0.0
+                latency_access_neuron: 0.0
+                energy_update_neuron: 0.0
+                latency_update_neuron: 0.0
+                energy_spike_out: 0.0
+                latency_spike_out: 0.0
+          axon_out:
+            - name: axon_out
+              attributes:
+                energy_message_out: 100.0e-12
+                latency_message_out: 5.0e-9
+
+
+## go into this sana fe folder using this "cd ~/SANA-FE" and add these three files into it
+reservoir_random.py
+reservoir_smallworld.py
+reservoir_uncoupled.py
+
+
+## how to run
+## add either "python3" (if using mac) or "python" before the file names (example: python3 reservoir_random.py) and hit enter. You will get 10 graphs as well as the energy readings for cpu and the virtual loihi chip usage
