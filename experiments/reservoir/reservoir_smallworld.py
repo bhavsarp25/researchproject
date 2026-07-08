@@ -23,9 +23,10 @@ Outputs:
   plot9_chip_energy.png         SANA-FE energy per window
   plot10_energy_comparison.png  chip vs CPU energy
 
-Run:  python3 reservoir_smallworld.py
+Run:  from experiments/reservoir/, run  python3 reservoir_smallworld.py
 Need: pip install numpy scikit-learn matplotlib pyyaml codecarbon
-      SANA-FE built at ~/SANA-FE/build/sim
+      SANA-FE built at the repo root (build/sim). Override with the
+      SANA_FE_BIN and SANA_FE_ARCH environment variables if needed.
 """
 
 import os
@@ -57,8 +58,14 @@ WINDOW_T     = 30      # SANA-FE timesteps per sample window
 SEED         = 42
 
 # SANA-FE paths
-SANA_BIN  = os.path.expanduser("~/SANA-FE/build/sim")
-ARCH_FILE = os.path.expanduser("~/SANA-FE/arch/simple_reservoir.yaml")
+# Resolve paths relative to this repo (the SANA-FE fork this file lives in).
+# This script sits in experiments/reservoir/, so the repo root is two levels up.
+# The env vars let you point at a build or arch file elsewhere if you prefer.
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT  = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
+
+SANA_BIN  = os.environ.get("SANA_FE_BIN",  os.path.join(REPO_ROOT, "build", "sim"))
+ARCH_FILE = os.environ.get("SANA_FE_ARCH", os.path.join(SCRIPT_DIR, "simple_reservoir.yaml"))
 SNN_FILE  = "/tmp/simple_snn.yaml"
 OUT_DIR   = "/tmp/sana_out"
 

@@ -1,16 +1,14 @@
 """
-Simple Reservoir Computer — Uncoupled topology + SANA-FE
-=========================================================
-A sine wave goes in. The reservoir (uncoupled — no recurrent
-connections) processes it in Python. SANA-FE simulates the same
-network on virtual neuromorphic hardware and gives us real chip
-energy numbers. Ridge and MLP read the state using both membrane
-voltage and firing rate representations. CodeCarbon tracks CPU
-energy across the entire run.
+Simple Reservoir Computer — Random topology + SANA-FE
+======================================================
+A sine wave goes in. The reservoir processes it in Python.
+SANA-FE simulates the same network on virtual neuromorphic hardware
+and gives us real chip energy numbers. Ridge and MLP read the state
+using both membrane voltage and firing rate representations.
+CodeCarbon tracks CPU energy across the entire run.
 
-Reservoir topology: uncoupled. Each neuron independently integrates
-the input signal. W is all zeros — no neuron-to-neuron connections.
-This is the baseline — any accuracy comes from input encoding alone.
+Reservoir topology: random. Neurons are randomly connected with
+density DENSITY=0.15. Spectral radius scaled to 0.9.
 
 Outputs:
   plot1_volt_ridge.png          signal vs Ridge (membrane voltage)
@@ -24,9 +22,10 @@ Outputs:
   plot9_chip_energy.png         SANA-FE energy per window
   plot10_energy_comparison.png  chip vs CPU energy
 
-Run:  python3 reservoir_uncoupled.py
+Run:  from experiments/reservoir/, run  python3 reservoir_random.py
 Need: pip install numpy scikit-learn matplotlib pyyaml codecarbon
-      SANA-FE built at ~/SANA-FE/build/sim
+      SANA-FE built at the repo root (build/sim). Override with the
+      SANA_FE_BIN and SANA_FE_ARCH environment variables if needed.
 """
 
 import os
@@ -45,6 +44,7 @@ from codecarbon             import EmissionsTracker
 # ── Settings ──────────────────────────────────────────────────
 N_NEURONS    = 64      # neurons in the reservoir
 N_INPUT      = 8       # input encoder neurons
+DENSITY      = 0.15    # fraction of neuron pairs connected
 LEAK         = 0.9     # membrane voltage leak per step
 THRESHOLD    = 1.0     # voltage needed to fire
 RATE_WIN     = 10      # timesteps to average spikes over for firing rate
@@ -56,8 +56,14 @@ WINDOW_T     = 30      # SANA-FE timesteps per sample window
 SEED         = 42
 
 # SANA-FE paths
-SANA_BIN  = os.path.expanduser("~/SANA-FE/build/sim")
-ARCH_FILE = os.path.expanduser("~/SANA-FE/arch/simple_reservoir.yaml")
+# Resolve paths relative to this repo (the SANA-FE fork this file lives in).
+# This script sits in experiments/reservoir/, so the repo root is two levels up.
+# The env vars let you point at a build or arch file elsewhere if you prefer.
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT  = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
+
+SANA_BIN  = os.environ.get("SANA_FE_BIN",  os.path.join(REPO_ROOT, "build", "sim"))
+ARCH_FILE = os.environ.get("SANA_FE_ARCH", os.path.join(SCRIPT_DIR, "simple_reservoir.yaml"))
 SNN_FILE  = "/tmp/simple_snn.yaml"
 OUT_DIR   = "/tmp/sana_out"
 
@@ -95,11 +101,15 @@ class AutoEncoder:
 encoder = AutoEncoder(n=N_INPUT)
 
 
-# ── Step 3: Reservoir — Uncoupled topology ─────────────────────
-# W is all zeros — no neuron-to-neuron connections.
-# Each neuron independently integrates the input via W_in only.
+# ── Step 3: Reservoir — Random topology ────────────────────────
+# Neurons randomly connected at density DENSITY.
+# Spectral radius scaled to 0.9 for echo state property.
 rng = np.random.RandomState(SEED)
-W   = np.zeros((N_NEURONS, N_NEURONS))
+
+W = rng.randn(N_NEURONS, N_NEURONS)
+W[rng.rand(N_NEURONS, N_NEURONS) > DENSITY] = 0.0
+scale = np.max(np.abs(np.linalg.eigvals(W)))
+W = W * (0.9 / scale)
 
 W_in    = rng.randn(N_NEURONS, N_INPUT) * 0.1
 voltage = np.zeros(N_NEURONS)
@@ -162,7 +172,12 @@ def write_snn_yaml(encoded):
                 if abs(w) > 0.001:
                     f.write(f"    - input_group.{pre} -> res_group.{post}"
                             f": [weight: {w:.4f}]\n")
-        # W is all zeros for uncoupled — no recurrent edges written
+        for pre in range(N_NEURONS):
+            for post in range(N_NEURONS):
+                w = float(W[post, pre])
+                if abs(w) > 0.001:
+                    f.write(f"    - res_group.{pre} -> res_group.{post}"
+                            f": [weight: {w:.4f}]\n")
 
         f.write("mappings:\n")
         for i in range(N_INPUT):
@@ -406,7 +421,7 @@ ax.plot(times, volt_ridge_preds, color="red",   lw=1.5, label="Ridge")
 vlines(ax)
 ax.legend(fontsize=10); ax.grid(alpha=0.2)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Amplitude")
-ax.set_title("Signal vs Ridge Prediction — Membrane Voltage (Uncoupled)")
+ax.set_title("Signal vs Ridge Prediction — Membrane Voltage (Random)")
 fig.tight_layout(); fig.savefig("plot1_volt_ridge.png", dpi=150); plt.close()
 
 # Plot 2 — Signal vs Voltage MLP
@@ -416,7 +431,7 @@ ax.plot(times, volt_mlp_preds, color="blue",  lw=1.5, label="MLP")
 vlines(ax)
 ax.legend(fontsize=10); ax.grid(alpha=0.2)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Amplitude")
-ax.set_title("Signal vs MLP Prediction — Membrane Voltage (Uncoupled)")
+ax.set_title("Signal vs MLP Prediction — Membrane Voltage (Random)")
 fig.tight_layout(); fig.savefig("plot2_volt_mlp.png", dpi=150); plt.close()
 
 # Plot 3 — Signal vs Rate Ridge
@@ -426,7 +441,7 @@ ax.plot(times, rate_ridge_preds, color="darkorange", lw=1.5, label="Ridge")
 vlines(ax)
 ax.legend(fontsize=10); ax.grid(alpha=0.2)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Amplitude")
-ax.set_title("Signal vs Ridge Prediction — Firing Rate (Uncoupled)")
+ax.set_title("Signal vs Ridge Prediction — Firing Rate (Random)")
 fig.tight_layout(); fig.savefig("plot3_rate_ridge.png", dpi=150); plt.close()
 
 # Plot 4 — Signal vs Rate MLP
@@ -436,7 +451,7 @@ ax.plot(times, rate_mlp_preds, color="purple", lw=1.5, label="MLP")
 vlines(ax)
 ax.legend(fontsize=10); ax.grid(alpha=0.2)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Amplitude")
-ax.set_title("Signal vs MLP Prediction — Firing Rate (Uncoupled)")
+ax.set_title("Signal vs MLP Prediction — Firing Rate (Random)")
 fig.tight_layout(); fig.savefig("plot4_rate_mlp.png", dpi=150); plt.close()
 
 # ── Accuracy error plots ───────────────────────────────────────
@@ -453,7 +468,7 @@ ax.text(0.97, 0.95, f"Accuracy: {vr_r2*100:.1f}%\nR2: {vr_r2:.3f}",
         bbox=dict(facecolor="white", edgecolor="lightgrey", boxstyle="round,pad=0.4"))
 ax.legend(); ax.grid(alpha=0.3)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Absolute Error")
-ax.set_title("Ridge Accuracy — Membrane Voltage (Uncoupled)")
+ax.set_title("Ridge Accuracy — Membrane Voltage (Random)")
 fig.tight_layout(); fig.savefig("plot5_volt_ridge_accuracy.png", dpi=150); plt.close()
 
 # Plot 6 — Voltage MLP accuracy
@@ -467,7 +482,7 @@ ax.text(0.97, 0.95, f"Accuracy: {vm_r2*100:.1f}%\nR2: {vm_r2:.3f}",
         bbox=dict(facecolor="white", edgecolor="lightgrey", boxstyle="round,pad=0.4"))
 ax.legend(); ax.grid(alpha=0.3)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Absolute Error")
-ax.set_title("MLP Accuracy — Membrane Voltage (Uncoupled)")
+ax.set_title("MLP Accuracy — Membrane Voltage (Random)")
 fig.tight_layout(); fig.savefig("plot6_volt_mlp_accuracy.png", dpi=150); plt.close()
 
 # Plot 7 — Rate Ridge accuracy
@@ -481,7 +496,7 @@ ax.text(0.97, 0.95, f"Accuracy: {rr_r2*100:.1f}%\nR2: {rr_r2:.3f}",
         bbox=dict(facecolor="white", edgecolor="lightgrey", boxstyle="round,pad=0.4"))
 ax.legend(); ax.grid(alpha=0.3)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Absolute Error")
-ax.set_title("Ridge Accuracy — Firing Rate (Uncoupled)")
+ax.set_title("Ridge Accuracy — Firing Rate (Random)")
 fig.tight_layout(); fig.savefig("plot7_rate_ridge_accuracy.png", dpi=150); plt.close()
 
 # Plot 8 — Rate MLP accuracy
@@ -495,7 +510,7 @@ ax.text(0.97, 0.95, f"Accuracy: {rm_r2*100:.1f}%\nR2: {rm_r2:.3f}",
         bbox=dict(facecolor="white", edgecolor="lightgrey", boxstyle="round,pad=0.4"))
 ax.legend(); ax.grid(alpha=0.3)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Absolute Error")
-ax.set_title("MLP Accuracy — Firing Rate (Uncoupled)")
+ax.set_title("MLP Accuracy — Firing Rate (Random)")
 fig.tight_layout(); fig.savefig("plot8_rate_mlp_accuracy.png", dpi=150); plt.close()
 
 # ── Energy plots ───────────────────────────────────────────────
@@ -510,7 +525,7 @@ if sana_mean_pj > 0:
     ax.legend()
 ax.grid(alpha=0.2, axis="y")
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Energy (pJ)")
-ax.set_title("SANA-FE Chip Energy per Sample Window — Uncoupled (Inference)")
+ax.set_title("SANA-FE Chip Energy per Sample Window — Random (Inference)")
 fig.tight_layout(); fig.savefig("plot9_chip_energy.png", dpi=150); plt.close()
 
 # Plot 10 — Energy comparison: chip vs CPU
@@ -525,7 +540,7 @@ for bar, v in zip(bars, vals):
             bar.get_height() + max(vals) * 0.02,
             f"{v:.3f} nJ", ha="center", fontsize=9)
 ax.set_ylabel("Energy (nJ)")
-ax.set_title("Energy Comparison: Chip vs CPU — Uncoupled (Full Run)")
+ax.set_title("Energy Comparison: Chip vs CPU — Random (Full Run)")
 ax.grid(alpha=0.3, axis="y")
 fig.tight_layout(); fig.savefig("plot10_energy_comparison.png", dpi=150); plt.close()
 
