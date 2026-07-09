@@ -4,18 +4,18 @@ Three reservoir computing experiments that run on SANA-FE. Each one feeds a sine
 
 ## Files
 
-- `reservoir_random.py` — random topology. Neurons connected at density 0.15, spectral radius scaled to 0.9.
-- `reservoir_smallworld.py` — Watts-Strogatz small-world topology. Ring of neurons, 4 neighbours per side, 10% of edges rewired.
-- `reservoir_uncoupled.py` — uncoupled baseline. No neuron-to-neuron connections, so each neuron integrates the input on its own.
-- `simple_reservoir.yaml` — the SANA-FE architecture all three scripts use. It defines a single-tile, eight-core setup with leaky-integrate-and-fire somas and per-hop energy and latency numbers.
-- `results/powermetrics_log.txt` — a macOS `powermetrics` energy capture kept as an experiment artifact.
+- `reservoir_random.py`, random topology. Neurons connected at density 0.15, spectral radius scaled to 0.9.
+- `reservoir_smallworld.py`, Watts-Strogatz small-world topology. Ring of neurons, 4 neighbours per side, 10% of edges rewired.
+- `reservoir_uncoupled.py`, uncoupled baseline. No neuron-to-neuron connections, so each neuron integrates the input on its own.
+- `simple_reservoir.yaml`, the SANA-FE architecture all three scripts use. It defines a single-tile, eight-core setup with leaky-integrate-and-fire somas and per-hop energy and latency numbers.
+- `results/powermetrics_log.txt`, a macOS `powermetrics` energy capture kept as an experiment artifact.
 
 ## Before you run
 
 Build SANA-FE first (see the top-level README). The scripts expect the binary at the repo root under `build/sim`, and they read `simple_reservoir.yaml` from this folder. Both locations can be overridden:
 
-- `SANA_FE_BIN` — path to the compiled `sim` binary.
-- `SANA_FE_ARCH` — path to the architecture YAML.
+- `SANA_FE_BIN`, path to the compiled `sim` binary.
+- `SANA_FE_ARCH`, path to the architecture YAML.
 
 Install the Python deps:
 
@@ -39,12 +39,12 @@ python3 reservoir_uncoupled.py
 
 Ten PNG plots in the current folder:
 
-- `plot1_volt_ridge.png`, `plot2_volt_mlp.png` — signal versus prediction, membrane voltage readout.
-- `plot3_rate_ridge.png`, `plot4_rate_mlp.png` — signal versus prediction, firing rate readout.
-- `plot5_volt_ridge_accuracy.png`, `plot6_volt_mlp_accuracy.png` — error over time, membrane voltage.
-- `plot7_rate_ridge_accuracy.png`, `plot8_rate_mlp_accuracy.png` — error over time, firing rate.
-- `plot9_chip_energy.png` — SANA-FE chip energy per sample window during inference.
-- `plot10_energy_comparison.png` — chip energy versus CPU energy for the full run.
+- `plot1_volt_ridge.png`, `plot2_volt_mlp.png`, signal versus prediction, membrane voltage readout.
+- `plot3_rate_ridge.png`, `plot4_rate_mlp.png`, signal versus prediction, firing rate readout.
+- `plot5_volt_ridge_accuracy.png`, `plot6_volt_mlp_accuracy.png`, error over time, membrane voltage.
+- `plot7_rate_ridge_accuracy.png`, `plot8_rate_mlp_accuracy.png`, error over time, firing rate.
+- `plot9_chip_energy.png`, SANA-FE chip energy per sample window during inference.
+- `plot10_energy_comparison.png`, chip energy versus CPU energy for the full run.
 
 The terminal also prints a results block: accuracy and mean absolute error for each of the four readouts, total CPU energy for the run (from CodeCarbon), and the SANA-FE chip energy total and mean per window in picojoules.
 

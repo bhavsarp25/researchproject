@@ -1,5 +1,5 @@
 """
-Simple Reservoir Computer — Random topology + SANA-FE
+Simple Reservoir Computer, Random topology + SANA-FE
 ======================================================
 A sine wave goes in. The reservoir processes it in Python.
 SANA-FE simulates the same network on virtual neuromorphic hardware
@@ -101,7 +101,7 @@ class AutoEncoder:
 encoder = AutoEncoder(n=N_INPUT)
 
 
-# ── Step 3: Reservoir — Random topology ────────────────────────
+# ── Step 3: Reservoir, Random topology ────────────────────────
 # Neurons randomly connected at density DENSITY.
 # Spectral radius scaled to 0.9 for echo state property.
 rng = np.random.RandomState(SEED)
@@ -241,7 +241,7 @@ volt_mlp_scaler   = StandardScaler()
 rate_ridge_scaler = StandardScaler()
 rate_mlp_scaler   = StandardScaler()
 
-# CodeCarbon — track CPU energy for the entire run
+# CodeCarbon, track CPU energy for the entire run
 cpu_tracker = EmissionsTracker(log_level="error", save_to_file=False,
                                measure_power_secs=999)
 cpu_tracker.start()
@@ -271,7 +271,7 @@ for step in range(total_steps):
 
     encoded = encoder.encode(val)
 
-    # Run reservoir — get both voltage and rate states
+    # Run reservoir, get both voltage and rate states
     volt_state, rate_state = reservoir_step(encoded)
 
     # Collect training data
@@ -336,7 +336,7 @@ for step in range(total_steps):
         xrm     = rate_mlp_scaler.transform(np.append(rate_state, rr_pred).reshape(1, -1))
         rm_pred = float(np.clip(rate_mlp_model.predict(xrm)[0], sig_lo, sig_hi))
 
-    # SANA-FE energy — inference only
+    # SANA-FE energy, inference only
     if phase == "infer":
         write_snn_yaml(encoded)
         chip_pj = run_sana_fe()
@@ -385,12 +385,12 @@ sana_mean_pj   = np.mean(infer_energies) if infer_energies else 0.0
 print("\n" + "="*55)
 print("  RESULTS")
 print("="*55)
-print(f"  Voltage Ridge — Accuracy: {vr_r2*100:.1f}%  MAE: {vr_mae:.4f}")
-print(f"  Voltage MLP   — Accuracy: {vm_r2*100:.1f}%  MAE: {vm_mae:.4f}")
-print(f"  Rate    Ridge — Accuracy: {rr_r2*100:.1f}%  MAE: {rr_mae:.4f}")
-print(f"  Rate    MLP   — Accuracy: {rm_r2*100:.1f}%  MAE: {rm_mae:.4f}")
+print(f"  Voltage Ridge, Accuracy: {vr_r2*100:.1f}%  MAE: {vr_mae:.4f}")
+print(f"  Voltage MLP  , Accuracy: {vm_r2*100:.1f}%  MAE: {vm_mae:.4f}")
+print(f"  Rate    Ridge, Accuracy: {rr_r2*100:.1f}%  MAE: {rr_mae:.4f}")
+print(f"  Rate    MLP  , Accuracy: {rm_r2*100:.1f}%  MAE: {rm_mae:.4f}")
 print(f"  CPU total (full run): {cpu_kwh:.8f} kWh")
-print(f"  SANA-FE — Total: {sana_total_pj:.1f} pJ  Mean/window: {sana_mean_pj:.1f} pJ")
+print(f"  SANA-FE, Total: {sana_total_pj:.1f} pJ  Mean/window: {sana_mean_pj:.1f} pJ")
 print("="*55)
 
 
@@ -414,50 +414,50 @@ def vlines(ax):
 
 # ── 4 signal vs prediction plots ──────────────────────────────
 
-# Plot 1 — Signal vs Voltage Ridge
+# Plot 1, Signal vs Voltage Ridge
 fig, ax = plt.subplots(figsize=(14, 5))
 ax.plot(times, signals,          color="black", lw=2.0, label="Signal")
 ax.plot(times, volt_ridge_preds, color="red",   lw=1.5, label="Ridge")
 vlines(ax)
 ax.legend(fontsize=10); ax.grid(alpha=0.2)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Amplitude")
-ax.set_title("Signal vs Ridge Prediction — Membrane Voltage (Random)")
+ax.set_title("Signal vs Ridge Prediction, Membrane Voltage (Random)")
 fig.tight_layout(); fig.savefig("plot1_volt_ridge.png", dpi=150); plt.close()
 
-# Plot 2 — Signal vs Voltage MLP
+# Plot 2, Signal vs Voltage MLP
 fig, ax = plt.subplots(figsize=(14, 5))
 ax.plot(times, signals,        color="black", lw=2.0, label="Signal")
 ax.plot(times, volt_mlp_preds, color="blue",  lw=1.5, label="MLP")
 vlines(ax)
 ax.legend(fontsize=10); ax.grid(alpha=0.2)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Amplitude")
-ax.set_title("Signal vs MLP Prediction — Membrane Voltage (Random)")
+ax.set_title("Signal vs MLP Prediction, Membrane Voltage (Random)")
 fig.tight_layout(); fig.savefig("plot2_volt_mlp.png", dpi=150); plt.close()
 
-# Plot 3 — Signal vs Rate Ridge
+# Plot 3, Signal vs Rate Ridge
 fig, ax = plt.subplots(figsize=(14, 5))
 ax.plot(times, signals,          color="black",      lw=2.0, label="Signal")
 ax.plot(times, rate_ridge_preds, color="darkorange", lw=1.5, label="Ridge")
 vlines(ax)
 ax.legend(fontsize=10); ax.grid(alpha=0.2)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Amplitude")
-ax.set_title("Signal vs Ridge Prediction — Firing Rate (Random)")
+ax.set_title("Signal vs Ridge Prediction, Firing Rate (Random)")
 fig.tight_layout(); fig.savefig("plot3_rate_ridge.png", dpi=150); plt.close()
 
-# Plot 4 — Signal vs Rate MLP
+# Plot 4, Signal vs Rate MLP
 fig, ax = plt.subplots(figsize=(14, 5))
 ax.plot(times, signals,        color="black",  lw=2.0, label="Signal")
 ax.plot(times, rate_mlp_preds, color="purple", lw=1.5, label="MLP")
 vlines(ax)
 ax.legend(fontsize=10); ax.grid(alpha=0.2)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Amplitude")
-ax.set_title("Signal vs MLP Prediction — Firing Rate (Random)")
+ax.set_title("Signal vs MLP Prediction, Firing Rate (Random)")
 fig.tight_layout(); fig.savefig("plot4_rate_mlp.png", dpi=150); plt.close()
 
 # ── Accuracy error plots ───────────────────────────────────────
 w = min(10, infer_steps)
 
-# Plot 5 — Voltage Ridge accuracy
+# Plot 5, Voltage Ridge accuracy
 err_vr = np.abs(np.array(volt_ridge_preds[infer_start:]) - np.array(signals[infer_start:]))
 fig, ax = plt.subplots(figsize=(10, 4))
 ax.plot(infer_t[w-1:], np.convolve(err_vr, np.ones(w)/w, mode="valid"),
@@ -468,10 +468,10 @@ ax.text(0.97, 0.95, f"Accuracy: {vr_r2*100:.1f}%\nR2: {vr_r2:.3f}",
         bbox=dict(facecolor="white", edgecolor="lightgrey", boxstyle="round,pad=0.4"))
 ax.legend(); ax.grid(alpha=0.3)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Absolute Error")
-ax.set_title("Ridge Accuracy — Membrane Voltage (Random)")
+ax.set_title("Ridge Accuracy, Membrane Voltage (Random)")
 fig.tight_layout(); fig.savefig("plot5_volt_ridge_accuracy.png", dpi=150); plt.close()
 
-# Plot 6 — Voltage MLP accuracy
+# Plot 6, Voltage MLP accuracy
 err_vm = np.abs(np.array(volt_mlp_preds[infer_start:]) - np.array(signals[infer_start:]))
 fig, ax = plt.subplots(figsize=(10, 4))
 ax.plot(infer_t[w-1:], np.convolve(err_vm, np.ones(w)/w, mode="valid"),
@@ -482,10 +482,10 @@ ax.text(0.97, 0.95, f"Accuracy: {vm_r2*100:.1f}%\nR2: {vm_r2:.3f}",
         bbox=dict(facecolor="white", edgecolor="lightgrey", boxstyle="round,pad=0.4"))
 ax.legend(); ax.grid(alpha=0.3)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Absolute Error")
-ax.set_title("MLP Accuracy — Membrane Voltage (Random)")
+ax.set_title("MLP Accuracy, Membrane Voltage (Random)")
 fig.tight_layout(); fig.savefig("plot6_volt_mlp_accuracy.png", dpi=150); plt.close()
 
-# Plot 7 — Rate Ridge accuracy
+# Plot 7, Rate Ridge accuracy
 err_rr = np.abs(np.array(rate_ridge_preds[infer_start:]) - np.array(signals[infer_start:]))
 fig, ax = plt.subplots(figsize=(10, 4))
 ax.plot(infer_t[w-1:], np.convolve(err_rr, np.ones(w)/w, mode="valid"),
@@ -496,10 +496,10 @@ ax.text(0.97, 0.95, f"Accuracy: {rr_r2*100:.1f}%\nR2: {rr_r2:.3f}",
         bbox=dict(facecolor="white", edgecolor="lightgrey", boxstyle="round,pad=0.4"))
 ax.legend(); ax.grid(alpha=0.3)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Absolute Error")
-ax.set_title("Ridge Accuracy — Firing Rate (Random)")
+ax.set_title("Ridge Accuracy, Firing Rate (Random)")
 fig.tight_layout(); fig.savefig("plot7_rate_ridge_accuracy.png", dpi=150); plt.close()
 
-# Plot 8 — Rate MLP accuracy
+# Plot 8, Rate MLP accuracy
 err_rm = np.abs(np.array(rate_mlp_preds[infer_start:]) - np.array(signals[infer_start:]))
 fig, ax = plt.subplots(figsize=(10, 4))
 ax.plot(infer_t[w-1:], np.convolve(err_rm, np.ones(w)/w, mode="valid"),
@@ -510,12 +510,12 @@ ax.text(0.97, 0.95, f"Accuracy: {rm_r2*100:.1f}%\nR2: {rm_r2:.3f}",
         bbox=dict(facecolor="white", edgecolor="lightgrey", boxstyle="round,pad=0.4"))
 ax.legend(); ax.grid(alpha=0.3)
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Absolute Error")
-ax.set_title("MLP Accuracy — Firing Rate (Random)")
+ax.set_title("MLP Accuracy, Firing Rate (Random)")
 fig.tight_layout(); fig.savefig("plot8_rate_mlp_accuracy.png", dpi=150); plt.close()
 
 # ── Energy plots ───────────────────────────────────────────────
 
-# Plot 9 — SANA-FE chip energy per inference step
+# Plot 9, SANA-FE chip energy per inference step
 fig, ax = plt.subplots(figsize=(14, 4))
 ax.bar(times[infer_start:], sana_energy[infer_start:],
        width=dt*0.9, color="steelblue", alpha=0.7)
@@ -525,10 +525,10 @@ if sana_mean_pj > 0:
     ax.legend()
 ax.grid(alpha=0.2, axis="y")
 ax.set_xlabel("Time (s)"); ax.set_ylabel("Energy (pJ)")
-ax.set_title("SANA-FE Chip Energy per Sample Window — Random (Inference)")
+ax.set_title("SANA-FE Chip Energy per Sample Window, Random (Inference)")
 fig.tight_layout(); fig.savefig("plot9_chip_energy.png", dpi=150); plt.close()
 
-# Plot 10 — Energy comparison: chip vs CPU
+# Plot 10, Energy comparison: chip vs CPU
 fig, ax = plt.subplots(figsize=(7, 5))
 sana_nj = sana_total_pj / 1000
 cpu_nj  = cpu_kwh * 3.6e12 / 1000
@@ -540,7 +540,7 @@ for bar, v in zip(bars, vals):
             bar.get_height() + max(vals) * 0.02,
             f"{v:.3f} nJ", ha="center", fontsize=9)
 ax.set_ylabel("Energy (nJ)")
-ax.set_title("Energy Comparison: Chip vs CPU — Random (Full Run)")
+ax.set_title("Energy Comparison: Chip vs CPU, Random (Full Run)")
 ax.grid(alpha=0.3, axis="y")
 fig.tight_layout(); fig.savefig("plot10_energy_comparison.png", dpi=150); plt.close()
 
